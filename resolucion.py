@@ -30,7 +30,19 @@ def verificar_reposo(centros_actuales, centros_previos, umbral_px=4.0):
     # Si la distancia calculada es menor al umbral, el frame se considera en reposo
     return distancia_total < umbral_px
 
-
+def agregar_padding(bbox, padding):
+    x, y, w, h = bbox
+    
+    #Restamos el padding a las coordenadas de origen
+    #para mover la esquina superior izquierda
+    nuevo_x = x - padding
+    nuevo_y = y - padding
+    
+    #Sumamos el padding*2 para poder compensar la resta anterior
+    nuevo_w = w + (padding * 2)
+    nuevo_h = h + (padding * 2)
+    
+    return (nuevo_x, nuevo_y, nuevo_w, nuevo_h)
 def segmentar_dados(frame):
     # Convertimos a hsv
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -76,7 +88,7 @@ def segmentar_dados(frame):
 
             dado = {
                 "imagen": roi,
-                "bounding_box": (x, y, w, h),
+                "bounding_box": agregar_padding((x, y, w, h), 5),
                 "centro": (cx, cy),
                 "area": area
             }
