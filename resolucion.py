@@ -4,31 +4,21 @@ import numpy as np
 
 
 def verificar_reposo(centros_actuales, centros_previos, umbral_px=4.0):
-    """
-    Compara dos listas de coordenadas.
-    Retorna True si la diferencia total es menor al umbral (Dados en reposo).
-    """
-    # Se deben tener la misma cantidad de centros en el frame actual que el anterior para
-    # poder recién verificar el reposo, si hay menos centros en el anterior que el actual
-    # significa que:
-    # 1 - Hay dados que todavía no fueron detectados
-    # 2 - Estan siendo lanzados/recolectados
-    if len(centros_actuales) != len(centros_previos):
+    
+    if len(centros_actuales) != len(centros_previos) or len(centros_actuales) == 0:
         return False
 
-    # En caso de no haber dados técnicamente estaría en reposo según lo que observamos
-    if len(centros_actuales) == 0:
-        return False
+    centros_p_np = np.array(centros_previos)
+    
+    movimiento_total = 0
 
-    # Calculamos las distancias entre los centros más cercanos
-    distancia_total = 0
-    for i in range(len(centros_actuales)):
-        p1 = np.array(centros_actuales[i])
-        p2 = np.array(centros_previos[i])
-        distancia_total += np.linalg.norm(p1 - p2)
-
-    # Si la distancia calculada es menor al umbral, el frame se considera en reposo
-    return distancia_total < umbral_px
+    for centro_curr in centros_actuales:
+        c_curr = np.array(centro_curr)
+        distancias = np.linalg.norm(centros_p_np - c_curr, axis=1)
+        distancia_minima = np.min(distancias)
+        
+        movimiento_total += distancia_minima
+    return movimiento_total < umbral_px
 
 def agregar_padding(bbox, padding):
     x, y, w, h = bbox
@@ -144,7 +134,7 @@ def analizar_tirada(ruta_video):
             centros_actuales.sort()
 
             esta_quieto = verificar_reposo(
-                centros_actuales, centros_previos, umbral_px=50)
+                centros_actuales, centros_previos, umbral_px=10)
 
             if esta_quieto:
                 contador_reposo += 1
