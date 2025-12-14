@@ -8,7 +8,7 @@ frame_actual_click = None
 frame_actual_index = 0
 
 
-def verificar_reposo(centros_actuales, centros_previos, umbral_px=4.0):
+def verificar_reposo(centros_actuales, centros_previos, umbral_px=10):
     if len(centros_actuales) != len(centros_previos) or len(centros_actuales) == 0:
         return False
 
@@ -120,11 +120,11 @@ def segmentar_dados(frame):
     mascara = cv2.add(mascara_comienzo1, mascara_final2)
 
     # Realizamos un cierre para rellenar los dados
-    nucleo = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (13, 13))
-    mascara = cv2.morphologyEx(mascara, cv2.MORPH_CLOSE, nucleo)
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (13, 13))
+    mascara = cv2.morphologyEx(mascara, cv2.MORPH_CLOSE, kernel)
 
     # Una apertura para eliminar ruido
-    mascara = cv2.morphologyEx(mascara, cv2.MORPH_OPEN, nucleo)
+    mascara = cv2.morphologyEx(mascara, cv2.MORPH_OPEN, kernel)
     cv2.imshow("Mascara Dados", mascara)
 
     # Encontramos contornos externos
@@ -465,16 +465,16 @@ if __name__ == '__main__':
     MAIN = True
     # True: Guardar los frames originales y los frames/videos procesados
     # False: Observar el funcionamiento del algoritmo sin persistir datos
-    GUARDAR_DATOS = True
+    GUARDAR_DATOS = False
     #Nota: Por favor dejar siempre en false, el commit de github tardó 2 minutos
 
     # True: Visualizar la detección del valor de cada dado - presionar cualquier tecla para continuar
     # False: Visualizar video procesado sin pausas
-    MOSTRAR_DETALLE_PUNTOS = False
+    MOSTRAR_DETALLE_PUNTOS = True
 
     # True: Muestra el histograma del frame 77 de la tirada 1
     # False: Muestra la ejecución normal del script
-    HIST = False
+    HIST = True
     
 
     
