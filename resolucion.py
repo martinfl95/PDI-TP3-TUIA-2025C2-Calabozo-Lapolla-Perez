@@ -228,6 +228,7 @@ def onClick(evento, x, y, flags, param):
                 print(f"HSV: [H: {h}, S: {s}, V: {v}]")
                 print("-" * 30)
 
+
 def analizar_tirada(ruta_video, grabar_datos, mostrar_detalle_puntos):
     captura = cv2.VideoCapture(ruta_video)
     nombre_archivo = os.path.basename(ruta_video)
@@ -275,7 +276,7 @@ def analizar_tirada(ruta_video, grabar_datos, mostrar_detalle_puntos):
         os.makedirs(dir_videos_proc, exist_ok=True)
         ruta_video_salida = os.path.join(
             dir_videos_proc, f"tirada_procesada_{nombre_sin_ext.split('_')[-1]}.mp4")
-        #Instancia de VideoWriter para guardar el video procesado
+        # Instancia de VideoWriter para guardar el video procesado
         codigo_fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         grabador_video = cv2.VideoWriter(
             ruta_video_salida, codigo_fourcc, fps, (ancho, alto))
@@ -287,7 +288,7 @@ def analizar_tirada(ruta_video, grabar_datos, mostrar_detalle_puntos):
             exito, frame_completo = captura.read()
             if not exito:
                 break
-            
+
             frame_escalado = cv2.resize(frame_completo, dsize=(
                 int(ancho/factor_escala), int(alto/factor_escala)))
 
@@ -305,7 +306,7 @@ def analizar_tirada(ruta_video, grabar_datos, mostrar_detalle_puntos):
             # Procesamos sobre la imagen escalada
             _, mascara, info_dados = segmentar_dados(frame_escalado)
 
-            #Obtenemos los centros de los dados
+            # Obtenemos los centros de los dados
             info_dados.sort(key=lambda d: d["centro"][0])
             centros_actuales = [d["centro"] for d in info_dados]
             centros_para_calculo = sorted(centros_actuales)
@@ -313,7 +314,7 @@ def analizar_tirada(ruta_video, grabar_datos, mostrar_detalle_puntos):
             esta_quieto = verificar_reposo(
                 centros_para_calculo, centros_previos, umbral_px=10)
 
-            #Contador > 5 (frames_para validar) corresponde a reposo
+            # Contador > 5 (frames_para validar) corresponde a reposo
             if esta_quieto:
                 contador_reposo += 1
             else:
@@ -321,14 +322,14 @@ def analizar_tirada(ruta_video, grabar_datos, mostrar_detalle_puntos):
                 ya_leido = False
                 valores_detectados = {}
 
-            #Estado a modo de barra superior en el frame
+            # Estado a modo de barra superior en el frame
             color_actual = (0, 255, 0)
             texto_estado = f"Cont. Reposo: ({contador_reposo})"
             estable = False
             suma_total = 0
 
             if contador_reposo > frames_para_validar:
-                #Solo nos interesa hacer el análisis si detectamos dados
+                # Solo nos interesa hacer el análisis si detectamos dados
                 if len(info_dados) > 0:
                     color_actual = (0, 0, 255)
                     texto_estado = f"En reposo - Dados: {len(info_dados)}"
@@ -382,7 +383,7 @@ def analizar_tirada(ruta_video, grabar_datos, mostrar_detalle_puntos):
 
             centros_previos = centros_para_calculo
             indice_frame += 1
-        #Eventos:
+        # Eventos:
         # 'q' cortar ejecucion video
         # 'p' pausar video
         tecla = cv2.waitKey(25) & 0xFF
@@ -395,17 +396,18 @@ def analizar_tirada(ruta_video, grabar_datos, mostrar_detalle_puntos):
     if grabador_video:
         grabador_video.release()
     cv2.destroyAllWindows()
-    
+
+
 def analizar_histograma_frame(ruta_imagen):
-    #Límites - Color blanco
+    # Límites - Color blanco
     lim_blanco_s = [0, 80]   # S: 0 a 80
-    lim_blanco_v = [95, 255] # V: 95 a 255
-    
-    #Limites - Color blanco
+    lim_blanco_v = [95, 255]  # V: 95 a 255
+
+    # Limites - Color blanco
     lim_rojo_h1 = [0, 12]    # H: 0 a 12
-    lim_rojo_h2 = [170, 180] # H: 170 a 180
-    lim_rojo_s  = [150, 255] # S: 150 a 255
-    lim_rojo_v  = [70, 255]  # V: 70 a 255
+    lim_rojo_h2 = [170, 180]  # H: 170 a 180
+    lim_rojo_s = [150, 255]  # S: 150 a 255
+    lim_rojo_v = [70, 255]  # V: 70 a 255
 
     if not os.path.exists(ruta_imagen):
         print(f"No se encuentra: {ruta_imagen}")
@@ -417,56 +419,62 @@ def analizar_histograma_frame(ruta_imagen):
 
     fig, axs = plt.subplots(3, 1, figsize=(10, 12))
     plt.subplots_adjust(hspace=0.5)
-    fig.suptitle(f'Verificación de Límites Elegidos: {os.path.basename(ruta_imagen)}', fontsize=16)
+    fig.suptitle(
+        f'Verificación de Límites Elegidos: {os.path.basename(ruta_imagen)}', fontsize=16)
 
-    #Gráfico de Tono
+    # Gráfico de Tono
     axs[0].hist(h.ravel(), 180, [0, 180], color='orange', alpha=0.5)
     axs[0].set_title('Canal H: Selección del Color Rojo')
     axs[0].set_xlim([0, 180])
-    
-    #Lim. Rojos
-    axs[0].axvspan(lim_rojo_h1[0], lim_rojo_h1[1], color='red', alpha=0.3, label='Rango Rojo Bajo (0-10)')
-    axs[0].axvspan(lim_rojo_h2[0], lim_rojo_h2[1], color='red', alpha=0.3, label='Rango Rojo Alto (170-180)')
-    
+
+    # Lim. Rojos
+    axs[0].axvspan(lim_rojo_h1[0], lim_rojo_h1[1], color='red',
+                   alpha=0.3, label='Rango Rojo Bajo (0-10)')
+    axs[0].axvspan(lim_rojo_h2[0], lim_rojo_h2[1], color='red',
+                   alpha=0.3, label='Rango Rojo Alto (170-180)')
+
     axs[0].legend(loc='upper right')
     axs[0].set_ylabel('Píxeles')
 
-    #Gráfico de Saturacion
+    # Gráfico de Saturacion
     axs[1].hist(s.ravel(), 256, [0, 256], color='teal', alpha=0.5)
     axs[1].set_title('Canal S: Separación Blanco y Rojo')
     axs[1].set_xlim([0, 256])
-    
-    #Lim. Zona Blanca (0-80)
-    axs[1].axvspan(lim_blanco_s[0], lim_blanco_s[1], color='gray', alpha=0.3, label='Rango Puntos (S<80)')
-    #Lim. Zona Roja (150-255)
-    axs[1].axvspan(lim_rojo_s[0], lim_rojo_s[1], color='red', alpha=0.3, label='Rango Dado (S>150)')
-    
-    
+
+    # Lim. Zona Blanca (0-80)
+    axs[1].axvspan(lim_blanco_s[0], lim_blanco_s[1], color='gray',
+                   alpha=0.3, label='Rango Puntos (S<80)')
+    # Lim. Zona Roja (150-255)
+    axs[1].axvspan(lim_rojo_s[0], lim_rojo_s[1], color='red',
+                   alpha=0.3, label='Rango Dado (S>150)')
+
     axs[1].legend(loc='upper right')
 
-    #Grafica de Valor (Brillo)
+    # Grafica de Valor (Brillo)
     axs[2].hist(v.ravel(), 256, [0, 256], color='black', alpha=0.5)
     axs[2].set_title('Canal V: Filtrado de Sombras')
     axs[2].set_xlim([0, 256])
-    
-    #Lim. Rango Rojo (>70)
-    axs[2].axvspan(lim_rojo_v[0], lim_rojo_v[1], color='red', alpha=0.2, label='Rango Dado (V>70)')
-    #Lim. Rango Blanco (>95) - Se solapa con el rojo
-    axs[2].axvspan(lim_blanco_v[0], lim_blanco_v[1], facecolor='none', edgecolor='blue', hatch='//', label='Rango Puntos (V>95)')
-    
+
+    # Lim. Rango Rojo (>70)
+    axs[2].axvspan(lim_rojo_v[0], lim_rojo_v[1], color='red',
+                   alpha=0.2, label='Rango Dado (V>70)')
+    # Lim. Rango Blanco (>95) - Se solapa con el rojo
+    axs[2].axvspan(lim_blanco_v[0], lim_blanco_v[1], facecolor='none',
+                   edgecolor='blue', hatch='//', label='Rango Puntos (V>95)')
+
     axs[2].legend(loc='upper left')
     axs[2].set_xlabel('Intensidad')
 
     plt.show()
-    
+
 
 if __name__ == '__main__':
-    #Bucle principal
+    # Bucle principal
     MAIN = True
     # True: Guardar los frames originales y los frames/videos procesados
     # False: Observar el funcionamiento del algoritmo sin persistir datos
     GUARDAR_DATOS = False
-    #Nota: Por favor dejar siempre en false, el commit de github tardó 2 minutos
+    # Nota: Por favor dejar siempre en false, el commit de github tardó 2 minutos
 
     # True: Visualizar la detección del valor de cada dado - presionar cualquier tecla para continuar
     # False: Visualizar video procesado sin pausas
@@ -475,9 +483,7 @@ if __name__ == '__main__':
     # True: Muestra el histograma del frame 77 de la tirada 1
     # False: Muestra la ejecución normal del script
     HIST = True
-    
 
-    
     lista_videos = ['tirada_1.mp4', 'tirada_2.mp4',
                     'tirada_3.mp4', 'tirada_4.mp4']
 
@@ -490,8 +496,8 @@ if __name__ == '__main__':
         for video in lista_videos:
             analizar_tirada(video, GUARDAR_DATOS, MOSTRAR_DETALLE_PUNTOS)
 
-    #Histograma para observar la distribución de Tono, Saturación y Valor
-    #en uno de los frames de Reposo
+    # Histograma para observar la distribución de Tono, Saturación y Valor
+    # en uno de los frames de Reposo
     if (HIST):
         ruta_frame = 'frames_originales/tirada_1/frame_77.jpg'
         analizar_histograma_frame(ruta_frame)
