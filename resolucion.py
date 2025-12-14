@@ -83,7 +83,6 @@ def contar_puntos(region_interes, mostrar_detalle):
         # cada dado y no solamente el último.
         cv2.waitKey(0)
 
-    # Si tenemos más de 6 puntos estamos en la lona
     return puntos if 0 < puntos <= 6 else 0
 
 
@@ -104,11 +103,11 @@ def segmentar_dados(frame):
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     # Definimos dos rangos para poder encontrar los dados ya que en el espectro de color
     # los tonos rojos estan al comienzo y al final del espectro.
-    # Rango rojo - Tono (0,10), Saturación (150,255), Valor (70,255)
+    # Rango rojo - Tono (0,12), Saturación (150,255), Valor (70,255)
     tono_bajo1 = np.array([0, 150, 70])
     tono_alto1 = np.array([12, 255, 255])
 
-    # Rango Rojo 2 - Tono (170,180) - Saturacion y valor igual al anterior
+    # Rango Rojo 2 - Tono (150,180) - Saturacion y valor igual al anterior
     tono_bajo2 = np.array([170, 150, 70])
     tono_alto2 = np.array([180, 255, 255])
 
@@ -170,7 +169,7 @@ def dibujar_dados(frame, info_dados, color, texto_estado, mostrar_valor=False, s
         # Bounding box
         cv2.rectangle(frame, (x, y), (x+w, y+h), color, 2 * factor_escala)
 
-        # ID - ¿arriba de la bounding box?
+        # ID
         cv2.putText(frame, f"ID:{id_dado}", (x, y - int(5 * factor_escala)),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5 * factor_escala, color, 1 * factor_escala)
 
@@ -398,16 +397,23 @@ def analizar_tirada(ruta_video, grabar_datos, mostrar_detalle_puntos):
     cv2.destroyAllWindows()
 
 
-def analizar_histograma_frame(ruta_imagen):
-    # Límites - Color blanco
-    lim_blanco_s = [0, 80]   # S: 0 a 80
-    lim_blanco_v = [95, 255]  # V: 95 a 255
+import cv2
+import os
+import matplotlib.pyplot as plt
 
-    # Limites - Color blanco
-    lim_rojo_h1 = [0, 12]    # H: 0 a 12
-    lim_rojo_h2 = [170, 180]  # H: 170 a 180
-    lim_rojo_s = [150, 255]  # S: 150 a 255
-    lim_rojo_v = [70, 255]  # V: 70 a 255
+def analizar_histograma_frame(ruta_imagen, objetivo='rojo'):
+    """
+    objetivo: 'rojo' para analizar los dados, 'blanco' para analizar los puntos.
+    """
+    # Límites - Color blanco
+    lim_blanco_s = [0, 80]     # S: 0 a 80 
+    lim_blanco_v = [95, 255]   # V: 95 a 255 
+
+    # Limites - Color rojo
+    lim_rojo_h1 = [0, 12]      # H: 0 a 12
+    lim_rojo_h2 = [170, 180]   # H: 170 a 180
+    lim_rojo_s = [150, 255]    # S: 150 a 255 
+    lim_rojo_v = [70, 255]     # V: 70 a 255 
 
     if not os.path.exists(ruta_imagen):
         print(f"No se encuentra: {ruta_imagen}")
@@ -419,53 +425,54 @@ def analizar_histograma_frame(ruta_imagen):
 
     fig, axs = plt.subplots(3, 1, figsize=(10, 12))
     plt.subplots_adjust(hspace=0.5)
-    fig.suptitle(
-        f'Verificación de Límites Elegidos: {os.path.basename(ruta_imagen)}', fontsize=16)
+    
+    # Título dinámico
+    titulo_obj = "Dados" if objetivo == 'rojo' else "Puntos"
+    fig.suptitle(f'Análisis de {titulo_obj}: {os.path.basename(ruta_imagen)}', fontsize=16)
 
-    # Gráfico de Tono
     axs[0].hist(h.ravel(), 180, [0, 180], color='orange', alpha=0.5)
-    axs[0].set_title('Canal H: Selección del Color Rojo')
     axs[0].set_xlim([0, 180])
-
-    # Lim. Rojos
-    axs[0].axvspan(lim_rojo_h1[0], lim_rojo_h1[1], color='red',
-                   alpha=0.3, label='Rango Rojo Bajo (0-10)')
-    axs[0].axvspan(lim_rojo_h2[0], lim_rojo_h2[1], color='red',
-                   alpha=0.3, label='Rango Rojo Alto (170-180)')
-
-    axs[0].legend(loc='upper right')
     axs[0].set_ylabel('Píxeles')
 
-    # Gráfico de Saturacion
+    #Gráfico de Tono
+    if objetivo == 'rojo':
+        axs[0].set_title('Canal H: Selección de Tono Rojo')
+        axs[0].axvspan(lim_rojo_h1[0], lim_rojo_h1[1], color='red', alpha=0.3, label='Rango Rojo Bajo (0-12)')
+        axs[0].axvspan(lim_rojo_h2[0], lim_rojo_h2[1], color='red', alpha=0.3, label='Rango Rojo Alto (170-180)')
+        axs[0].legend(loc='upper right')
+    else:
+        # Para el blanco, el tono es irrelevante ya que es acromático
+        axs[0].set_title('Canal H: (El tono es irrelevante para el blanco)')
+
+    #Gráfico de saturación
     axs[1].hist(s.ravel(), 256, [0, 256], color='teal', alpha=0.5)
-    axs[1].set_title('Canal S: Separación Blanco y Rojo')
     axs[1].set_xlim([0, 256])
 
-    # Lim. Zona Blanca (0-80)
-    axs[1].axvspan(lim_blanco_s[0], lim_blanco_s[1], color='gray',
-                   alpha=0.3, label='Rango Puntos (S<80)')
-    # Lim. Zona Roja (150-255)
-    axs[1].axvspan(lim_rojo_s[0], lim_rojo_s[1], color='red',
-                   alpha=0.3, label='Rango Dado (S>150)')
-
+    if objetivo == 'rojo':
+        axs[1].set_title('Canal S: Buscando Alta Saturación (Dado)')
+        axs[1].axvspan(lim_rojo_s[0], lim_rojo_s[1], color='red', alpha=0.3, label='Rango Dado (S > 150)')
+    else:
+        axs[1].set_title('Canal S: Buscando Baja Saturación (Puntos)')
+        axs[1].axvspan(lim_blanco_s[0], lim_blanco_s[1], color='gray', alpha=0.3, label='Rango Puntos (S < 80)')
+    
     axs[1].legend(loc='upper right')
-
-    # Grafica de Valor (Brillo)
+    
+    #Gráfico de Brillo
     axs[2].hist(v.ravel(), 256, [0, 256], color='black', alpha=0.5)
-    axs[2].set_title('Canal V: Filtrado de Sombras')
     axs[2].set_xlim([0, 256])
-
-    # Lim. Rango Rojo (>70)
-    axs[2].axvspan(lim_rojo_v[0], lim_rojo_v[1], color='red',
-                   alpha=0.2, label='Rango Dado (V>70)')
-    # Lim. Rango Blanco (>95) - Se solapa con el rojo
-    axs[2].axvspan(lim_blanco_v[0], lim_blanco_v[1], facecolor='none',
-                   edgecolor='blue', hatch='//', label='Rango Puntos (V>95)')
-
-    axs[2].legend(loc='upper left')
     axs[2].set_xlabel('Intensidad')
 
+    if objetivo == 'rojo':
+        axs[2].set_title('Canal V: Filtrado de Sombras (Dado)')
+        axs[2].axvspan(lim_rojo_v[0], lim_rojo_v[1], color='red', alpha=0.2, label='Rango Dado (V > 70)')
+    else:
+        axs[2].set_title('Canal V: Filtrado de Sombras (Puntos)')
+        axs[2].axvspan(lim_blanco_v[0], lim_blanco_v[1], facecolor='none', edgecolor='blue', hatch='//', label='Rango Puntos (V > 95)')
+
+    axs[2].legend(loc='upper left')
+
     plt.show()
+
 
 
 if __name__ == '__main__':
@@ -474,7 +481,6 @@ if __name__ == '__main__':
     # True: Guardar los frames originales y los frames/videos procesados
     # False: Observar el funcionamiento del algoritmo sin persistir datos
     GUARDAR_DATOS = False
-    # Nota: Por favor dejar siempre en false, el commit de github tardó 2 minutos
 
     # True: Visualizar la detección del valor de cada dado - presionar cualquier tecla para continuar
     # False: Visualizar video procesado sin pausas
@@ -482,7 +488,8 @@ if __name__ == '__main__':
 
     # True: Muestra el histograma del frame 77 de la tirada 1
     # False: Muestra la ejecución normal del script
-    HIST = True
+    HIST_ROJO = True
+    HIST_BLANCO = True
 
     lista_videos = ['tirada_1.mp4', 'tirada_2.mp4',
                     'tirada_3.mp4', 'tirada_4.mp4']
@@ -498,6 +505,10 @@ if __name__ == '__main__':
 
     # Histograma para observar la distribución de Tono, Saturación y Valor
     # en uno de los frames de Reposo
-    if (HIST):
+    if (HIST_ROJO):
         ruta_frame = 'frames_originales/tirada_1/frame_77.jpg'
-        analizar_histograma_frame(ruta_frame)
+        analizar_histograma_frame(ruta_frame, 'rojo')
+    
+    if (HIST_BLANCO):
+        ruta_frame = 'frames_originales/tirada_1/frame_77.jpg'
+        analizar_histograma_frame(ruta_frame, 'blanco')
