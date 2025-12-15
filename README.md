@@ -94,15 +94,52 @@ El algoritmo se estructura en una secuencia de etapas claras:
 - **Salidas opcionales (frames / videos procesados)**  
   Generadas automáticamente cuando se habilita el guardado mediante una bandera del `main`.
 
----
+## Configuración Global (Banderas)
 
-## Configuración del script y uso de banderas (main)
-
-El comportamiento del script principal se controla mediante banderas definidas en el bloque:
+El comportamiento del script se controla mediante variables booleanas (`True`/`False`) situadas al inicio del bloque `__main__`. Estas banderas permiten alternar entre modos de depuración, análisis y producción sin modificar la lógica interna.
 
 ```python
 if __name__ == '__main__':
     MAIN = True
     GUARDAR_DATOS = False
     MOSTRAR_DETALLE_PUNTOS = True
-    HIST = True
+    HIST_ROJO = True
+    HIST_BLANCO = True
+```
+
+### Control de Ejecución
+
+* **`MAIN`**
+    * `True`: Ejecuta el bucle principal que procesa la lista de videos (`lista_videos`).
+    * `False`: Salta el procesamiento de video. Útil si solo deseas ejecutar los análisis de histogramas sin correr todo el algoritmo de detección.
+
+* **`MOSTRAR_DETALLE_PUNTOS`**
+    * `True`: **Modo paso a paso**. El video se pausa en cada detección para visualizar el conteo de puntos del dado. Requiere presionar una tecla para continuar.
+    * `False`: **Modo fluido**. Visualiza el video procesado de forma continua sin interrupciones.
+
+### Persistencia de Datos
+
+* **`GUARDAR_DATOS`**
+    * `True`: **Modo Producción**. Guarda los frames originales y procesados en el disco.
+    * `False`: **Modo Observación**. Ejecuta el algoritmo visualmente pero **no** guarda archivos en el disco (ideal para pruebas rápidas).
+
+### Herramientas de Análisis (Histogramas)
+
+Estas banderas activan el análisis de color sobre un frame de control específico (actualmente configurado para `frame_77` de la `tirada_1`).
+
+* **`HIST_ROJO`**
+    * `True`: Genera y muestra un gráfico de la distribución de Tono, Saturación y Valor (HSV) enfocado en los tonos **rojos** (para calibrar la detección del cuerpo del dado).
+* **`HIST_BLANCO`**
+    * `True`: Genera y muestra el histograma enfocado en los tonos **blancos** (para calibrar la detección de los puntos del dado).
+
+---
+
+### Atajos de Teclado y Mouse (Runtime)
+
+Durante la ejecución del video (`MAIN = True`), puedes interactuar con la ventana:
+
+| Tecla / Acción | Función |
+| :--- | :--- |
+| **`p`** | Pausar el video momentáneamente. |
+| **`q`** | Finalizar la ejecución del video actual. |
+| **Click Izquierdo** | (Sobre el frame original) Muestra en consola las coordenadas `(x, y)` y los valores HSV del píxel seleccionado. |
