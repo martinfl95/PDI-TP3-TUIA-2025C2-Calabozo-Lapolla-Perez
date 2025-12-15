@@ -478,6 +478,7 @@ def analizar_histograma_frame(ruta_imagen, objetivo='rojo'):
 if __name__ == '__main__':
     # Bucle principal
     MAIN = True
+    
     # True: Guardar los frames originales y los frames/videos procesados
     # False: Observar el funcionamiento del algoritmo sin persistir datos
     GUARDAR_DATOS = False
@@ -486,9 +487,10 @@ if __name__ == '__main__':
     # False: Visualizar video procesado sin pausas
     MOSTRAR_DETALLE_PUNTOS = True
 
-    # True: Muestra el histograma del frame 77 de la tirada 1
-    # False: Muestra la ejecución normal del script
+    # True: Muestra el histograma para tonos rojos del frame 77 de la tirada 1
     HIST_ROJO = True
+    
+    # True: Muestra el histograma para puntos blancos del frame 77 de la tirada 1
     HIST_BLANCO = True
 
     lista_videos = ['tirada_1.mp4', 'tirada_2.mp4',
